@@ -55,7 +55,7 @@ using System.Text;
 namespace Gurux.Bluetooth
 {
     /// <summary>
-    /// A media component that enables communication of serial port for Android devices.
+    /// A media component that enables communication of bluetooth for Android devices.
     /// See help in https://www.gurux.fi/Gurux.Bluetooth
     /// </summary>
     public class GXBluetooth : IGXMedia2, IDisposable
@@ -68,7 +68,7 @@ namespace Gurux.Bluetooth
         private const int WaitTime = 200;
 
         /// <summary>
-        /// Is serial port closing.
+        /// Is bluetooth closing.
         /// </summary>
         public ManualResetEvent _closing = new ManualResetEvent(false);
 
@@ -252,7 +252,7 @@ namespace Gurux.Bluetooth
         }
 
         /// <summary>
-        /// Gets a value indicating the open or closed status of the SerialPort object.
+        /// Is bluetooth connection established.
         /// </summary>
         [Browsable(false)]
         public bool IsOpen
@@ -346,7 +346,7 @@ namespace Gurux.Bluetooth
         }
 
         /// <summary>
-        /// Closes the port connection, sets the SerialPort.IsOpen property to false, and disposes of the internal System.IO.Stream object.
+        /// Closes the Bluetooth connection.
         /// </summary>
         public void Close()
         {
@@ -372,7 +372,7 @@ namespace Gurux.Bluetooth
         }
 
         /// <summary>
-        /// Gets an array of serial port names for the current computer.
+        /// Gets an array of availble bluetooth devices.
         /// </summary>
         /// <returns></returns>
         public BluetoothDevice[] GetDevices()
@@ -388,7 +388,7 @@ namespace Gurux.Bluetooth
         }
 
         /// <summary>
-        /// Opens a new serial port connection.
+        /// Opens a new bluetooth connection.
         /// </summary>
         public void Open()
         {
@@ -415,7 +415,7 @@ namespace Gurux.Bluetooth
                     m_OnTrace(this, new TraceEventArgs(TraceTypes.Info,
                             "Settings: Device: " + Device, null));
                 }
-                //Serial port.
+                //bluetooth.
                 UUID Ssp = UUID.FromString("00001101-0000-1000-8000-00805F9B34FB");
                 BluetoothManager manager = (BluetoothManager)_contect.GetSystemService(Context.BluetoothService);
                 if (manager.Adapter == null)
