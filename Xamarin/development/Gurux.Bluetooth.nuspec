@@ -14,16 +14,16 @@
     <repository url="https://github.com/gurux/Gurux.Bluetooth.Android" />
     <dependencies>
       <group targetFramework="MonoAndroid10.0">
-        <dependency id="Gurux.Common" version="8.4.2211.501" />
+        <dependency id="Gurux.Common.Android" version="8.4.2401.2408" />
       </group>
       <group targetFramework="MonoAndroid11.0">
-        <dependency id="Gurux.Common" version="8.4.2211.501" />
+        <dependency id="Gurux.Common.Android" version="8.4.2401.2408" />
       </group>
       <group targetFramework="MonoAndroid12.0">
-        <dependency id="Gurux.Common" version="8.4.2211.501" />
+        <dependency id="Gurux.Common.Android" version="8.4.2401.2408" />
       </group>
       <group targetFramework="MonoAndroid13.0">
-        <dependency id="Gurux.Common" version="8.4.2211.501" />
+        <dependency id="Gurux.Common.Android" version="8.4.2401.2408" />
       </group>
     </dependencies>
   </metadata>
