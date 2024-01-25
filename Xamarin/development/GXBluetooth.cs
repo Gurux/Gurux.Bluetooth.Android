@@ -75,6 +75,10 @@ namespace Gurux.Bluetooth
         /// Is bluetooth closing.
         /// </summary>
         public ManualResetEvent _closing = new ManualResetEvent(false);
+        /// <summary>
+        /// Is bluetooth received closed.
+        /// </summary>
+        public ManualResetEvent _closed = new ManualResetEvent(false);
 
         BluetoothDevice _device;
         private readonly Context _contect;
@@ -378,7 +382,8 @@ namespace Gurux.Bluetooth
             if (_receiver != null && !_receiver.IsCompleted)
             {
                 _closing.Set();
-                _receiver.Wait();
+                _closed.WaitOne(1000);
+                _closed.Reset();
                 _receiver = null;
             }
             if (_socket != null)
@@ -425,6 +430,7 @@ namespace Gurux.Bluetooth
             try
             {
                 _closing.Reset();
+                _closed.Reset();
                 if (_device == null)
                 {
                     throw new System.Exception("Bluetooth device is not selected.");
@@ -456,7 +462,7 @@ namespace Gurux.Bluetooth
                 _socket.Connect();
                 _receiver = Task.Run(() =>
                 {
-                    byte[] tmp = new byte[100];
+                    byte[] tmp = new byte[1024];
                     while (!_closing.WaitOne(0))
                     {
                         try
@@ -467,7 +473,7 @@ namespace Gurux.Bluetooth
                                 HandleReceivedData(0, tmp, count);
                             }
                         }
-                        catch (System.Exception ex)
+                        catch (Exception ex)
                         {
                             if (!_closing.WaitOne(0))
                             {
@@ -475,6 +481,7 @@ namespace Gurux.Bluetooth
                             }
                         }
                     }
+                    _closed.Set();
                 });
                 NotifyMediaStateChange(MediaState.Open);
             }
