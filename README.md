@@ -28,8 +28,6 @@ It is also good to listen following events:
 * OnError
 * OnReceived
 * OnMediaStateChange
-* OnPortAdd
-* OnPortRemove
 
 ```csharp
 
