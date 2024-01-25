@@ -9,9 +9,9 @@
     <licenseUrl>https://licenses.nuget.org/GPL-2.0-only</licenseUrl>
     <icon>GXBluetooth.png</icon>
     <description>Bluetooth media component, for Bluetooth port connections.</description>
-    <copyright>Copyright (c) 1998-2023 Gurux Ltd. All rights reserved.</copyright>
+    <copyright>Copyright (c) 1998-2024 Gurux Ltd. All rights reserved.</copyright>
     <tags>Gurux Device Framework Network Bluetooth port</tags>
-    <repository url="https://github.com/gurux/Gurux.Bluetooth" />
+    <repository url="https://github.com/gurux/Gurux.Bluetooth.Android" />
     <dependencies>
       <group targetFramework="MonoAndroid10.0">
         <dependency id="Gurux.Common" version="8.4.2211.501" />

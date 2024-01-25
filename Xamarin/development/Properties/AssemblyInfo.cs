@@ -12,12 +12,17 @@ using Android.Hardware.Usb;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Gurux Ltd.")]
 [assembly: AssemblyProduct("Gurux.Bluetooth.Android")]
-[assembly: AssemblyCopyright("Copyright (c) 1998-2022 Gurux Ltd. All rights reserved.")]
+[assembly: AssemblyCopyright("Copyright (c) 1998-2024 Gurux Ltd. All rights reserved.")]
 [assembly: AssemblyTrademark("Gurux Ltd.")]
 [assembly: AssemblyCulture("")]
 [assembly: ComVisible(false)]
 
-[assembly: UsesFeature("android.hardware.usb.host")]
+[assembly: UsesFeature("android.hardware.bluetooth")]
+[assembly: UsesPermission("android.permission.BLUETOOTH")]
+[assembly: UsesPermission("android.permission.BLUETOOTH_CONNECT")]
+[assembly: UsesPermission("android.permission.BLUETOOTH_ADMIN")]
+[assembly: UsesPermission("android.permission.BLUETOOTH_CONNECT")]
+
 // Version information for an assembly consists of the following four values:
 //
 //      Major Version

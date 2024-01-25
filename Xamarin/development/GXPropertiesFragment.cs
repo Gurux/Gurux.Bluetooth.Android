@@ -50,9 +50,9 @@ namespace Gurux.Bluetooth
         /// <inheritdoc/>
         public override View OnCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
         {
-            View view = base.OnCreateView(inflater, container, savedInstanceState);
+            View view = inflater.Inflate(Resource.Layout.fragment_properties, container, false);
             _base = new GXPropertiesBase((ListView)view.FindViewById(Resource.Id.properties), Activity);
-            //Show serial port info.
+            //Show Bluetooth info.
             _showInfo = view.FindViewById<Button>(Resource.Id.showInfo);
             _showInfo.Click += (sender, e) =>
             {

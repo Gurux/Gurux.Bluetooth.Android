@@ -46,11 +46,15 @@ using System.Threading.Tasks;
 using Android.Bluetooth;
 using Java.Util;
 using System.Text;
+using Android.Content.PM;
+using AndroidX.Core.App;
+using Gurux.Common.Enums;
 
 [assembly: UsesFeature("android.hardware.bluetooth")]
 [assembly: UsesPermission("android.permission.BLUETOOTH")]
-[assembly: UsesPermission("android.permission.BLUETOOTH_ADMIN")]
 [assembly: UsesPermission("android.permission.BLUETOOTH_CONNECT")]
+[assembly: UsesPermission("android.permission.BLUETOOTH_ADMIN")]
+[assembly: UsesPermission("android.permission.BLUETOOTH_SCAN")]
 
 namespace Gurux.Bluetooth
 {
@@ -82,7 +86,6 @@ namespace Gurux.Bluetooth
         private readonly GXSynchronousMediaBase _syncBase;
         UInt64 _bytesSent, m_BytesReceived;
         readonly object m_Synchronous = new object();
-
         BluetoothSocket _socket;
         /// <summary>
         /// Constructor.
@@ -105,6 +108,28 @@ namespace Gurux.Bluetooth
                 }
             }
             GetDevices();
+        }
+
+        private bool CheckAccessRights()
+        {
+            if (_contect is Activity activity1)
+            {
+                List<string> missing = new List<string>();
+                if (Permission.Denied == _contect.CheckSelfPermission("android.permission.BLUETOOTH_CONNECT"))
+                {
+                    missing.Add("android.permission.BLUETOOTH_CONNECT");
+                }
+                if (Permission.Denied == _contect.CheckSelfPermission("android.permission.BLUETOOTH_SCAN"))
+                {
+                    missing.Add("android.permission.BLUETOOTH_SCAN");
+                }
+                if (missing.Any())
+                {
+                    ActivityCompat.RequestPermissions(activity1, missing.ToArray(), 2);
+                    return true;
+                }
+            }
+            return false;
         }
 
         /// <summary>
@@ -377,6 +402,10 @@ namespace Gurux.Bluetooth
         /// <returns></returns>
         public BluetoothDevice[] GetDevices()
         {
+            if (CheckAccessRights())
+            {
+                return new BluetoothDevice[0];
+            }
             List<BluetoothDevice> devices = new List<BluetoothDevice>();
             BluetoothManager manager = (BluetoothManager)_contect.GetSystemService(Context.BluetoothService);
             var list = manager.GetConnectedDevices(ProfileType.Gatt);
@@ -572,13 +601,6 @@ namespace Gurux.Bluetooth
 
         /// <inheritdoc cref="IGXMedia.Tag"/>
         public object Tag
-        {
-            get;
-            set;
-        }
-
-        /// <inheritdoc />
-        IGXMediaContainer IGXMedia.MediaContainer
         {
             get;
             set;

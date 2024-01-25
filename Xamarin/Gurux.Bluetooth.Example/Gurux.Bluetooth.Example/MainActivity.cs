@@ -13,6 +13,7 @@ using System.Text;
 using Android.Bluetooth;
 using System.Drawing.Printing;
 using static Android.Bluetooth.BluetoothClass;
+using Gurux.Common.Enums;
 
 namespace Gurux.Bluetooth.Example
 {
@@ -50,7 +51,7 @@ namespace Gurux.Bluetooth.Example
 
         private void SetValue(int id, object value)
         {
-            SecureStorage.SetAsync(GetString(id), value.ToString()).Wait();
+            SecureStorage.SetAsync(GetString(id), Convert.ToString(value)).Wait();
         }
 
 
@@ -248,7 +249,7 @@ namespace Gurux.Bluetooth.Example
             }
         }
 
-        static T Cast<T>(Java.Lang.Object? obj) where T : class
+        static T Cast<T>(Java.Lang.Object obj) where T : class
         {
             var propertyInfo = obj.GetType().GetProperty("Instance");
             return propertyInfo == null ? null : propertyInfo.GetValue(obj, null) as T;

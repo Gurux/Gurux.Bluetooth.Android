@@ -5,7 +5,9 @@ VisualStudioVersion = 17.4.33103.184
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gurux.Bluetooth.Example", "Gurux.Bluetooth.Example\Gurux.Bluetooth.Example.csproj", "{C3B49AF2-A4CF-4DBA-A38C-BB9479C2B1C0}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gurux.Bluetooth.Android", "..\development\Gurux.Bluetooth.Android.csproj", "{718907FD-D406-48D6-873B-E52458DA5F7D}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gurux.Bluetooth.Android", "..\development\Gurux.Bluetooth.Android.csproj", "{C82CD826-D4B9-42C6-82F8-A6A19A6B3317}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gurux.Common.Android", "..\..\..\..\Gurux.Common.Android\Development\Gurux.Common.Android.csproj", "{06B59A5E-1178-468A-B065-74F997750E13}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -19,10 +21,14 @@ Global
 		{C3B49AF2-A4CF-4DBA-A38C-BB9479C2B1C0}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C3B49AF2-A4CF-4DBA-A38C-BB9479C2B1C0}.Release|Any CPU.Build.0 = Release|Any CPU
 		{C3B49AF2-A4CF-4DBA-A38C-BB9479C2B1C0}.Release|Any CPU.Deploy.0 = Release|Any CPU
-		{718907FD-D406-48D6-873B-E52458DA5F7D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{718907FD-D406-48D6-873B-E52458DA5F7D}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{718907FD-D406-48D6-873B-E52458DA5F7D}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{718907FD-D406-48D6-873B-E52458DA5F7D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C82CD826-D4B9-42C6-82F8-A6A19A6B3317}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C82CD826-D4B9-42C6-82F8-A6A19A6B3317}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C82CD826-D4B9-42C6-82F8-A6A19A6B3317}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C82CD826-D4B9-42C6-82F8-A6A19A6B3317}.Release|Any CPU.Build.0 = Release|Any CPU
+		{06B59A5E-1178-468A-B065-74F997750E13}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{06B59A5E-1178-468A-B065-74F997750E13}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{06B59A5E-1178-468A-B065-74F997750E13}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{06B59A5E-1178-468A-B065-74F997750E13}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
