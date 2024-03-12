@@ -1,4 +1,5 @@
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -8,16 +9,37 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical">
-
-        <Button
-            android:id="@+id/showInfo"
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/infoBtn" />
+            android:orientation="horizontal">
+            <Button
+                android:visibility="gone"
+                android:id="@+id/stop"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/stopBtn" />
+            <Button
+                android:id="@+id/scan"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/scanBtn" />
 
+            <Button
+                android:id="@+id/showInfo"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/infoBtn" />
+        </LinearLayout>
+        <ListView
+            android:id="@+id/scannedDevices"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+        </ListView>
         <ListView
             android:id="@+id/properties"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"></ListView>
+            android:layout_height="match_parent">
+        </ListView>
     </LinearLayout>
 </FrameLayout>

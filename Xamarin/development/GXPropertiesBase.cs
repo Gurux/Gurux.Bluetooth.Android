@@ -37,20 +37,27 @@ using System.Collections.Generic;
 using System.Linq;
 using System;
 using Android.Bluetooth;
+using Android.Views;
 
 namespace Gurux.Bluetooth
 {
     internal class GXPropertiesBase
     {
         private readonly Context activity;
-        private readonly ListView listView;
+        private readonly ListView _properties;
+        private readonly ListView _scannedDevices;
         private List<string> rows = new List<string>();
+        private List<string> _devices = new List<string>();
         private static GXBluetooth _bluetooth;
 
-        public GXPropertiesBase(ListView lv, Context c)
+        public GXPropertiesBase(ListView properties, ListView scannedDevices, Context c)
         {
+            scannedDevices.Visibility = ViewStates.Gone;
+            var bluetooth = GXPropertiesBase.GetBluetooth();
+            bluetooth.OnDeviceAdd += Bluetooth_OnDeviceAdd;
             activity = c;
-            listView = lv;
+            _properties = properties;
+            _scannedDevices = scannedDevices;
             //Select first device if it's not selected.
             if (_bluetooth.GetDevice() == null)
             {
@@ -61,11 +68,13 @@ namespace Gurux.Bluetooth
                 }
             }
             rows.Add(GetDevice());
-            //Add serial port settings.
+            _devices = _bluetooth.GetDevices().Select(s => s.Name).ToList();
+
+            //Add Bluetooth settings.
             ArrayAdapter<string> adapter = new ArrayAdapter<string>(activity,
                     Resource.Layout.support_simple_spinner_dropdown_item, rows);
-            listView.Adapter = adapter;
-            listView.ItemClick += (sender, e) =>
+            _properties.Adapter = adapter;
+            _properties.ItemClick += (sender, e) =>
             {
                 switch (e.Position)
                 {
@@ -77,10 +86,29 @@ namespace Gurux.Bluetooth
                         break;
                 };
             };
+
+            //Add scanned bluetooth devices.
+            adapter = new ArrayAdapter<string>(activity,
+                    Resource.Layout.support_simple_spinner_dropdown_item, _devices);
+            _scannedDevices.Adapter = adapter;          
+        }
+
+        private void Bluetooth_OnDeviceAdd(BluetoothDevice device)
+        {
+            _devices.Add(device.Name);
+            //Add scanned bluetooth devices.
+            ArrayAdapter<string> adapter = new ArrayAdapter<string>(activity,
+                    Resource.Layout.support_simple_spinner_dropdown_item, _devices);
+            _scannedDevices.Adapter = adapter;
         }
 
         public void Close()
         {
+            var bluetooth = GetBluetooth();
+            if (bluetooth != null)
+            {
+                bluetooth.OnDeviceAdd -= Bluetooth_OnDeviceAdd;
+            }
         }
 
         public static GXBluetooth GetBluetooth()
@@ -135,7 +163,7 @@ namespace Gurux.Bluetooth
                     rows[0] = GetDevice();
                     ArrayAdapter<string> adapter = new ArrayAdapter<string>(activity,
                     Resource.Layout.support_simple_spinner_dropdown_item, rows);
-                    listView.Adapter = adapter;
+                    _properties.Adapter = adapter;
                     var d = (sender as AlertDialog);
                     d.Dismiss();
                 }
@@ -147,7 +175,7 @@ namespace Gurux.Bluetooth
                 rows[0] = GetDevice();
                 ArrayAdapter<string> adapter = new ArrayAdapter<string>(activity,
                 Resource.Layout.support_simple_spinner_dropdown_item, rows);
-                listView.Adapter = adapter;
+                _properties.Adapter = adapter;
             }
         }
     }

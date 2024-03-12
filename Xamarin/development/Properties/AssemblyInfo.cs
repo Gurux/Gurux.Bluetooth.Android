@@ -22,6 +22,10 @@ using Android.Hardware.Usb;
 [assembly: UsesPermission("android.permission.BLUETOOTH_CONNECT")]
 [assembly: UsesPermission("android.permission.BLUETOOTH_ADMIN")]
 [assembly: UsesPermission("android.permission.BLUETOOTH_CONNECT")]
+[assembly: UsesPermission("android.permission.BLUETOOTH_SCAN")]
+[assembly: UsesPermission("android.permission.ACCESS_COARSE_LOCATION")]
+[assembly: UsesPermission("android.permission.ACCESS_FINE_LOCATION")]
+[assembly: UsesFeature("android.hardware.bluetooth_le")]
 
 // Version information for an assembly consists of the following four values:
 //

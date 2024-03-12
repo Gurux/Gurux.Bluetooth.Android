@@ -1,9 +1,11 @@
 <resources>
-  <string name="app_name">Gurux Bluetooth</string>
-  <string name="properties">Properties:</string>
-  <string name="ok">OK</string>
-  <string name="cancel">Cancel</string>
-  <string name="device">Device</string>
-  <string name="chipset">Chipset</string>
-  <string name="infoBtn">Info</string>
+    <string name="app_name">Gurux Bluetooth</string>
+    <string name="properties">Properties:</string>
+    <string name="ok">OK</string>
+    <string name="cancel">Cancel</string>
+    <string name="device">Device</string>
+    <string name="chipset">Chipset</string>
+    <string name="infoBtn">Info</string>
+    <string name="scanBtn">Scan</string>
+    <string name="stopBtn">Stop</string>
 </resources>

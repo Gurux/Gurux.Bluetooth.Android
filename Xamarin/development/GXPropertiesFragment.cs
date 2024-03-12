@@ -30,7 +30,6 @@
 // Full text may be retrieved at http://www.gnu.org/licenses/gpl-2.0.txt
 //---------------------------------------------------------------------------
 
-using Android.Bluetooth;
 using Android.OS;
 using Android.Views;
 using Android.Widget;
@@ -45,20 +44,78 @@ namespace Gurux.Bluetooth
     public class GXPropertiesFragment : AndroidX.Fragment.App.Fragment
     {
         private GXPropertiesBase _base;
-        private Button _showInfo;
 
         /// <inheritdoc/>
         public override View OnCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
         {
+            var bluetooth = GXPropertiesBase.GetBluetooth();
             View view = inflater.Inflate(Resource.Layout.fragment_properties, container, false);
-            _base = new GXPropertiesBase((ListView)view.FindViewById(Resource.Id.properties), Activity);
+            ListView properties = (ListView)view.FindViewById(Resource.Id.properties);
+            ListView scannedDevices = (ListView)view.FindViewById(Resource.Id.scannedDevices);
+            _base = new GXPropertiesBase(properties, scannedDevices, Activity);
+            //Stop bluetooth scan button.
+            Button stopBtn = view.FindViewById<Button>(Resource.Id.stop);
+            //Show Bluetooth scan button.
+            Button scanBtn = view.FindViewById<Button>(Resource.Id.scan);
             //Show Bluetooth info.
-            _showInfo = view.FindViewById<Button>(Resource.Id.showInfo);
-            _showInfo.Click += (sender, e) =>
+            Button infoBtn = view.FindViewById<Button>(Resource.Id.showInfo);
+            stopBtn.Click += (sender, e) =>
             {
                 try
                 {
-                    new AlertDialog.Builder(_showInfo.RootView.Context)
+                    stopBtn.Visibility = ViewStates.Gone;
+                    scanBtn.Visibility = ViewStates.Visible;
+                    infoBtn.Visibility = ViewStates.Visible;
+                    scannedDevices.Visibility = ViewStates.Gone;
+                    properties.Visibility = ViewStates.Visible;
+                    bluetooth.StopScan();
+                }
+                catch (Exception ex)
+                {
+                    try
+                    {
+                        new AlertDialog.Builder(infoBtn.RootView.Context)
+                                .SetTitle("Exception")
+                                .SetMessage(ex.Message)
+                                .SetPositiveButton(Resource.String.ok, (senderAlert, args) => { })
+                                .Show();
+                    }
+                    catch (Exception)
+                    {
+                    }
+                }
+            };
+            scanBtn.Click += (sender, e) =>
+            {
+                try
+                {
+                    bluetooth.Scan();
+                    stopBtn.Visibility = ViewStates.Visible;
+                    scanBtn.Visibility = ViewStates.Gone;
+                    infoBtn.Visibility = ViewStates.Gone;
+                    scannedDevices.Visibility = ViewStates.Visible;
+                    properties.Visibility = ViewStates.Gone;
+                }
+                catch (Exception ex)
+                {
+                    try
+                    {
+                        new AlertDialog.Builder(infoBtn.RootView.Context)
+                                .SetTitle("Exception")
+                                .SetMessage(ex.Message)
+                                .SetPositiveButton(Resource.String.ok, (senderAlert, args) => { })
+                                .Show();
+                    }
+                    catch (Exception)
+                    {
+                    }
+                }
+            };
+            infoBtn.Click += (sender, e) =>
+            {
+                try
+                {
+                    new AlertDialog.Builder(infoBtn.RootView.Context)
                             .SetTitle("Info")
                             .SetMessage(GXPropertiesBase.GetBluetooth().GetInfo())
                             .SetPositiveButton(Resource.String.ok, (senderAlert, args) => { })
@@ -67,7 +124,7 @@ namespace Gurux.Bluetooth
                 catch (Exception)
                 {
                 }
-            };
+            };         
             return view;
         }
 

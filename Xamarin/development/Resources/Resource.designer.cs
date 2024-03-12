@@ -2398,199 +2398,208 @@ namespace Gurux.Bluetooth
 			public static int right_side = 2131230839;
 			
 			// aapt resource value: 0x7F080078
-			public static int screen = 2131230840;
+			public static int scan = 2131230840;
 			
 			// aapt resource value: 0x7F080079
-			public static int scrollIndicatorDown = 2131230841;
+			public static int scannedDevices = 2131230841;
 			
 			// aapt resource value: 0x7F08007A
-			public static int scrollIndicatorUp = 2131230842;
+			public static int screen = 2131230842;
 			
 			// aapt resource value: 0x7F08007B
-			public static int scrollView = 2131230843;
+			public static int scrollIndicatorDown = 2131230843;
 			
 			// aapt resource value: 0x7F08007C
-			public static int search_badge = 2131230844;
+			public static int scrollIndicatorUp = 2131230844;
 			
 			// aapt resource value: 0x7F08007D
-			public static int search_bar = 2131230845;
+			public static int scrollView = 2131230845;
 			
 			// aapt resource value: 0x7F08007E
-			public static int search_button = 2131230846;
+			public static int search_badge = 2131230846;
 			
 			// aapt resource value: 0x7F08007F
-			public static int search_close_btn = 2131230847;
+			public static int search_bar = 2131230847;
 			
 			// aapt resource value: 0x7F080080
-			public static int search_edit_frame = 2131230848;
+			public static int search_button = 2131230848;
 			
 			// aapt resource value: 0x7F080081
-			public static int search_go_btn = 2131230849;
+			public static int search_close_btn = 2131230849;
 			
 			// aapt resource value: 0x7F080082
-			public static int search_mag_icon = 2131230850;
+			public static int search_edit_frame = 2131230850;
 			
 			// aapt resource value: 0x7F080083
-			public static int search_plate = 2131230851;
+			public static int search_go_btn = 2131230851;
 			
 			// aapt resource value: 0x7F080084
-			public static int search_src_text = 2131230852;
+			public static int search_mag_icon = 2131230852;
 			
 			// aapt resource value: 0x7F080085
-			public static int search_voice_btn = 2131230853;
+			public static int search_plate = 2131230853;
 			
 			// aapt resource value: 0x7F080086
-			public static int select_dialog_listview = 2131230854;
+			public static int search_src_text = 2131230854;
+			
+			// aapt resource value: 0x7F080087
+			public static int search_voice_btn = 2131230855;
+			
+			// aapt resource value: 0x7F080088
+			public static int select_dialog_listview = 2131230856;
 			
 			// aapt resource value: 0x7F080004
 			public static int SHIFT = 2131230724;
 			
-			// aapt resource value: 0x7F080087
-			public static int shortcut = 2131230855;
-			
-			// aapt resource value: 0x7F080088
-			public static int showCustom = 2131230856;
-			
 			// aapt resource value: 0x7F080089
-			public static int showHome = 2131230857;
+			public static int shortcut = 2131230857;
 			
 			// aapt resource value: 0x7F08008A
-			public static int showInfo = 2131230858;
+			public static int showCustom = 2131230858;
 			
 			// aapt resource value: 0x7F08008B
-			public static int showTitle = 2131230859;
+			public static int showHome = 2131230859;
 			
 			// aapt resource value: 0x7F08008C
-			public static int spacer = 2131230860;
+			public static int showInfo = 2131230860;
 			
 			// aapt resource value: 0x7F08008D
-			public static int special_effects_controller_view_tag = 2131230861;
+			public static int showTitle = 2131230861;
 			
 			// aapt resource value: 0x7F08008E
-			public static int split_action_bar = 2131230862;
+			public static int spacer = 2131230862;
 			
 			// aapt resource value: 0x7F08008F
-			public static int src_atop = 2131230863;
+			public static int special_effects_controller_view_tag = 2131230863;
 			
 			// aapt resource value: 0x7F080090
-			public static int src_in = 2131230864;
+			public static int split_action_bar = 2131230864;
 			
 			// aapt resource value: 0x7F080091
-			public static int src_over = 2131230865;
+			public static int src_atop = 2131230865;
 			
 			// aapt resource value: 0x7F080092
-			public static int submenuarrow = 2131230866;
+			public static int src_in = 2131230866;
 			
 			// aapt resource value: 0x7F080093
-			public static int submit_area = 2131230867;
+			public static int src_over = 2131230867;
+			
+			// aapt resource value: 0x7F080094
+			public static int stop = 2131230868;
+			
+			// aapt resource value: 0x7F080095
+			public static int submenuarrow = 2131230869;
+			
+			// aapt resource value: 0x7F080096
+			public static int submit_area = 2131230870;
 			
 			// aapt resource value: 0x7F080005
 			public static int SYM = 2131230725;
 			
-			// aapt resource value: 0x7F080094
-			public static int tabMode = 2131230868;
-			
-			// aapt resource value: 0x7F080095
-			public static int tag_accessibility_actions = 2131230869;
-			
-			// aapt resource value: 0x7F080096
-			public static int tag_accessibility_clickable_spans = 2131230870;
-			
 			// aapt resource value: 0x7F080097
-			public static int tag_accessibility_heading = 2131230871;
+			public static int tabMode = 2131230871;
 			
 			// aapt resource value: 0x7F080098
-			public static int tag_accessibility_pane_title = 2131230872;
+			public static int tag_accessibility_actions = 2131230872;
 			
 			// aapt resource value: 0x7F080099
-			public static int tag_on_apply_window_listener = 2131230873;
+			public static int tag_accessibility_clickable_spans = 2131230873;
 			
 			// aapt resource value: 0x7F08009A
-			public static int tag_on_receive_content_listener = 2131230874;
+			public static int tag_accessibility_heading = 2131230874;
 			
 			// aapt resource value: 0x7F08009B
-			public static int tag_on_receive_content_mime_types = 2131230875;
+			public static int tag_accessibility_pane_title = 2131230875;
 			
 			// aapt resource value: 0x7F08009C
-			public static int tag_screen_reader_focusable = 2131230876;
+			public static int tag_on_apply_window_listener = 2131230876;
 			
 			// aapt resource value: 0x7F08009D
-			public static int tag_state_description = 2131230877;
+			public static int tag_on_receive_content_listener = 2131230877;
 			
 			// aapt resource value: 0x7F08009E
-			public static int tag_transition_group = 2131230878;
+			public static int tag_on_receive_content_mime_types = 2131230878;
 			
 			// aapt resource value: 0x7F08009F
-			public static int tag_unhandled_key_event_manager = 2131230879;
+			public static int tag_screen_reader_focusable = 2131230879;
 			
 			// aapt resource value: 0x7F0800A0
-			public static int tag_unhandled_key_listeners = 2131230880;
+			public static int tag_state_description = 2131230880;
 			
 			// aapt resource value: 0x7F0800A1
-			public static int tag_window_insets_animation_callback = 2131230881;
+			public static int tag_transition_group = 2131230881;
 			
 			// aapt resource value: 0x7F0800A2
-			public static int text = 2131230882;
+			public static int tag_unhandled_key_event_manager = 2131230882;
 			
 			// aapt resource value: 0x7F0800A3
-			public static int text2 = 2131230883;
+			public static int tag_unhandled_key_listeners = 2131230883;
 			
 			// aapt resource value: 0x7F0800A4
-			public static int textSpacerNoButtons = 2131230884;
+			public static int tag_window_insets_animation_callback = 2131230884;
 			
 			// aapt resource value: 0x7F0800A5
-			public static int textSpacerNoTitle = 2131230885;
+			public static int text = 2131230885;
 			
 			// aapt resource value: 0x7F0800A6
-			public static int time = 2131230886;
+			public static int text2 = 2131230886;
 			
 			// aapt resource value: 0x7F0800A7
-			public static int title = 2131230887;
+			public static int textSpacerNoButtons = 2131230887;
 			
 			// aapt resource value: 0x7F0800A8
-			public static int titleDividerNoCustom = 2131230888;
+			public static int textSpacerNoTitle = 2131230888;
 			
 			// aapt resource value: 0x7F0800A9
-			public static int title_template = 2131230889;
+			public static int time = 2131230889;
 			
 			// aapt resource value: 0x7F0800AA
-			public static int top = 2131230890;
+			public static int title = 2131230890;
 			
 			// aapt resource value: 0x7F0800AB
-			public static int topPanel = 2131230891;
+			public static int titleDividerNoCustom = 2131230891;
 			
 			// aapt resource value: 0x7F0800AC
-			public static int @unchecked = 2131230892;
+			public static int title_template = 2131230892;
 			
 			// aapt resource value: 0x7F0800AD
-			public static int uniform = 2131230893;
+			public static int top = 2131230893;
 			
 			// aapt resource value: 0x7F0800AE
-			public static int up = 2131230894;
+			public static int topPanel = 2131230894;
 			
 			// aapt resource value: 0x7F0800AF
-			public static int useLogo = 2131230895;
+			public static int @unchecked = 2131230895;
 			
 			// aapt resource value: 0x7F0800B0
-			public static int view_tree_lifecycle_owner = 2131230896;
+			public static int uniform = 2131230896;
 			
 			// aapt resource value: 0x7F0800B1
-			public static int view_tree_on_back_pressed_dispatcher_owner = 2131230897;
+			public static int up = 2131230897;
 			
 			// aapt resource value: 0x7F0800B2
-			public static int view_tree_saved_state_registry_owner = 2131230898;
+			public static int useLogo = 2131230898;
 			
 			// aapt resource value: 0x7F0800B3
-			public static int view_tree_view_model_store_owner = 2131230899;
+			public static int view_tree_lifecycle_owner = 2131230899;
 			
 			// aapt resource value: 0x7F0800B4
-			public static int visible_removing_fragment_view_tag = 2131230900;
+			public static int view_tree_on_back_pressed_dispatcher_owner = 2131230900;
 			
 			// aapt resource value: 0x7F0800B5
-			public static int withText = 2131230901;
+			public static int view_tree_saved_state_registry_owner = 2131230901;
 			
 			// aapt resource value: 0x7F0800B6
-			public static int wrap_content = 2131230902;
+			public static int view_tree_view_model_store_owner = 2131230902;
+			
+			// aapt resource value: 0x7F0800B7
+			public static int visible_removing_fragment_view_tag = 2131230903;
+			
+			// aapt resource value: 0x7F0800B8
+			public static int withText = 2131230904;
+			
+			// aapt resource value: 0x7F0800B9
+			public static int wrap_content = 2131230905;
 			
 			static Id()
 			{
@@ -2936,10 +2945,16 @@ namespace Gurux.Bluetooth
 			public static int properties = 2131492905;
 			
 			// aapt resource value: 0x7F0C002A
-			public static int search_menu_title = 2131492906;
+			public static int scanBtn = 2131492906;
 			
 			// aapt resource value: 0x7F0C002B
-			public static int status_bar_notification_info_overflow = 2131492907;
+			public static int search_menu_title = 2131492907;
+			
+			// aapt resource value: 0x7F0C002C
+			public static int status_bar_notification_info_overflow = 2131492908;
+			
+			// aapt resource value: 0x7F0C002D
+			public static int stopBtn = 2131492909;
 			
 			static String()
 			{

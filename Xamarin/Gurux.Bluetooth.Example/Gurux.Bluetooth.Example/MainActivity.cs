@@ -9,11 +9,10 @@ using System.Collections.Generic;
 using Xamarin.Essentials;
 using System.Linq;
 using Gurux.Common;
+using Gurux.Common.Enums;
 using System.Text;
 using Android.Bluetooth;
-using System.Drawing.Printing;
 using static Android.Bluetooth.BluetoothClass;
-using Gurux.Common.Enums;
 
 namespace Gurux.Bluetooth.Example
 {
@@ -60,7 +59,10 @@ namespace Gurux.Bluetooth.Example
         /// </summary>
         private void ReadSettings()
         {
-            bluetooth.Device = GetValue<string>(Resource.String.device, "");
+            if (bluetooth != null)
+            {
+                bluetooth.Device = GetValue<string>(Resource.String.device, "");
+            }
             hex.Checked = GetValue<bool>(Resource.String.hex, true);
             sendData.Text = GetValue<string>(Resource.String.sendData, "");
         }
@@ -90,12 +92,20 @@ namespace Gurux.Bluetooth.Example
             {
                 ShowInfo();
             };
-
             deviceList = FindViewById<Spinner>(Resource.Id.deviceList);
             deviceAdapter = new ArrayAdapter<string>(this,
             Resource.Layout.support_simple_spinner_dropdown_item, _devices);
             deviceAdapter.SetDropDownViewResource(Resource.Layout.support_simple_spinner_dropdown_item);
             deviceList.Adapter = deviceAdapter;
+            deviceList.ItemSelected += (sender, e) =>
+            {
+                var list = bluetooth.GetDevices();
+                if (e.Position < list.Length)
+                {
+                    bluetooth.Device = list[e.Position].Name;
+                }
+            };
+
             openBtn = FindViewById<Button>(Resource.Id.openBtn);
             openBtn.Click += (sender, e) =>
             {
@@ -324,11 +334,14 @@ namespace Gurux.Bluetooth.Example
         {
             Console.WriteLine("OnResume");
             deviceAdapter.Clear();
-            foreach (BluetoothDevice it in bluetooth.GetDevices())
+            if (bluetooth != null)
             {
-                deviceAdapter.Add(it.Name);
+                foreach (BluetoothDevice it in bluetooth.GetDevices())
+                {
+                    deviceAdapter.Add(it.Name);
+                }
+                deviceAdapter.NotifyDataSetChanged();
             }
-            deviceAdapter.NotifyDataSetChanged();
             openBtn.Enabled = deviceAdapter.Count != 0;
             ReadSettings();
             base.OnResume();

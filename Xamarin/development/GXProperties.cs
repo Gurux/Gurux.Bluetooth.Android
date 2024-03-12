@@ -32,6 +32,7 @@
 
 using Android.Bluetooth;
 using Android.OS;
+using Android.Views;
 using Android.Widget;
 using AndroidX.AppCompat.App;
 using Java.Lang;
@@ -45,27 +46,63 @@ namespace Gurux.Bluetooth
     public class GXProperties : AppCompatActivity
     {
         private GXPropertiesBase _base;
-        private Button _showInfo;
-
         /// <inheritdoc />
         protected override void OnCreate(Bundle savedInstanceState)
         {
             base.OnCreate(savedInstanceState);
             SetContentView(Resource.Layout.activity_properties);
-            _base = new GXPropertiesBase((ListView)FindViewById(Resource.Id.properties), this);
+            ListView properties = (ListView)FindViewById(Resource.Id.properties);
+            ListView scannedDevices = (ListView)FindViewById(Resource.Id.scannedDevices);
+            _base = new GXPropertiesBase(properties, scannedDevices, this);
+            //Stop bluetooth scan button.
+            Button stopBtn = FindViewById<Button>(Resource.Id.stop);
+            //Show Bluetooth scan button.
+            Button scanBtn = FindViewById<Button>(Resource.Id.scan);
+
             //Show serial port info.
-            _showInfo = FindViewById<Button>(Resource.Id.showInfo);
-            _showInfo.Click += (sender, e) =>
+            Button infoBtn = FindViewById<Button>(Resource.Id.showInfo);
+
+            stopBtn.Click += (sender, e) =>
             {
                 try
                 {
-                    BluetoothDevice port = GXPropertiesBase.GetBluetooth().GetDevice();
+                    stopBtn.Visibility = ViewStates.Gone;
+                    infoBtn.Visibility = ViewStates.Visible;
+                    scanBtn.Visibility = ViewStates.Visible;
+                    scannedDevices.Visibility = ViewStates.Gone;
+                    properties.Visibility = ViewStates.Visible;
+                    GXPropertiesBase.GetBluetooth().StopScan();
+                }
+                catch (Exception)
+                {
+                }
+            };
+            scanBtn.Click += (sender, e) =>
+            {
+                try
+                {
+                    GXPropertiesBase.GetBluetooth().Scan();
+                    stopBtn.Visibility = ViewStates.Visible;
+                    scanBtn.Visibility = ViewStates.Gone;
+                    infoBtn.Visibility = ViewStates.Gone;
+                    scannedDevices.Visibility = ViewStates.Visible;
+                    properties.Visibility = ViewStates.Gone;
+                }
+                catch (Exception)
+                {
+                }
+            };
+            infoBtn.Click += (sender, e) =>
+            {
+                try
+                {
+                    BluetoothDevice device = GXPropertiesBase.GetBluetooth().GetDevice();
                     string info = "";
-                    if (port != null)
+                    if (device != null)
                     {
-                        info = port.ToString();
+                        info = device.ToString();
                     }
-                    new AlertDialog.Builder(_showInfo.RootView.Context)
+                    new AlertDialog.Builder(infoBtn.RootView.Context)
                             .SetTitle("Info")
                             .SetMessage(info)
                             .SetPositiveButton(Resource.String.ok, (senderAlert, args) => { })

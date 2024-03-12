@@ -49,6 +49,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="GXBluetoothReciever.cs" />
     <Compile Include="GXPropertiesFragment.cs" />
     <Compile Include="GXPropertiesBase.cs" />
     <Compile Include="GXProperties.cs" />
