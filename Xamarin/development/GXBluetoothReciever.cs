@@ -52,8 +52,10 @@ namespace Gurux.Bluetooth
         {
             if (BluetoothDevice.ActionFound == intent.Action)
             {
-                BluetoothDevice device = (BluetoothDevice)intent.GetParcelableExtra(BluetoothDevice.ExtraDevice,
-                    Java.Lang.Class.FromType(typeof(BluetoothDevice)));
+                // GetParcelableExtra throws expeption in Xamaring. Don't use it.
+                // BluetoothDevice device = (BluetoothDevice)intent.GetParcelableExtra(BluetoothDevice.ExtraDevice,
+                // Java.Lang.Class.FromType(typeof(BluetoothDevice)));
+                BluetoothDevice device = (BluetoothDevice)intent.GetParcelableExtra(BluetoothDevice.ExtraDevice);
                 _bluetooth.AddDevice(device);
             }
         }
