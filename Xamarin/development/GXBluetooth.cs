@@ -235,40 +235,43 @@ namespace Gurux.Bluetooth
 
         internal void AddDevice(BluetoothDevice device)
         {
-            UUID SSP = UUID.FromString("00001101-0000-1000-8000-00805F9B34FB");
-            bool found = false;
-            if (device.BondState == Bond.None)
+            bool found = !ShowOnlySerialPorts;
+            if (ShowOnlySerialPorts)
             {
-                device.FetchUuidsWithSdp();
-            }
-            var uuids = device.GetUuids();
-            if (uuids != null)
-            {
-                foreach (var it in uuids)
+                UUID SSP = UUID.FromString("00001101-0000-1000-8000-00805F9B34FB");
+                if (device.BondState == Bond.None)
                 {
-                    if (it.Uuid.ToString() == SSP.ToString())
+                    device.FetchUuidsWithSdp();
+                }
+                var uuids = device.GetUuids();
+                if (uuids != null)
+                {
+                    foreach (var it in uuids)
                     {
-                        //SSP found.
-                        found = true;
-                        break;
+                        if (it.Uuid.ToString() == SSP.ToString())
+                        {
+                            //SSP found.
+                            found = true;
+                            break;
+                        }
                     }
                 }
-            }
-            if (!found && uuids != null)
-            {
-                //Read manufacturer spesific UUID from file.
-                string[] rows;
-                using (var reader = new System.IO.StreamReader(_context.Assets.Open("devices.csv")))
+                if (!found && uuids != null)
                 {
-                    rows = reader.ReadToEnd().Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);
-                }
-                //Add only devices that implement SSP or are defined in the devices file.
-                foreach (var uuid in uuids)
-                {
-                    if (uuid != null && uuid.ToString() == SSP.ToString())
+                    //Read manufacturer spesific UUID from file.
+                    string[] rows;
+                    using (var reader = new System.IO.StreamReader(_context.Assets.Open("devices.csv")))
                     {
-                        found = true;
-                        break;
+                        rows = reader.ReadToEnd().Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);
+                    }
+                    //Add only devices that implement SSP or are defined in the devices file.
+                    foreach (var uuid in uuids)
+                    {
+                        if (uuid != null && uuid.ToString() == SSP.ToString())
+                        {
+                            found = true;
+                            break;
+                        }
                     }
                 }
             }
@@ -323,6 +326,19 @@ namespace Gurux.Bluetooth
             {
                 m_Trace = _syncBase.Trace = value;
             }
+        }
+
+        /// <summary>
+        /// Devices that don't implement SPP are hidden.
+        /// </summary>
+        /// <remarks>
+        /// If the Bluetooth device is not implement Serial Port Profile or 
+        /// it's not in devices.csv it is not shown.
+        /// </remarks>
+        public bool ShowOnlySerialPorts
+        {
+            get;
+            set;
         }
 
         private void HandleReceivedData(int index, byte[] buffer, int totalCount)
@@ -592,45 +608,52 @@ namespace Gurux.Bluetooth
             devices.AddRange(list);
             devices.AddRange(manager.Adapter.BondedDevices);
             List<BluetoothDevice> result = new List<BluetoothDevice>();
-            UUID SSP = UUID.FromString("00001101-0000-1000-8000-00805F9B34FB");
-            //Read manufacturer spesific UUID from file.
-            string[] rows;
-            using (var reader = new System.IO.StreamReader(_context.Assets.Open("devices.csv")))
+            if (!ShowOnlySerialPorts)
             {
-                rows = reader.ReadToEnd().Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);
+                result.AddRange(devices);
             }
-            //Add only devices that implement SSP or are defined in the devices file.
-            foreach (var it in devices)
+            else
             {
-                bool found = false;
-                var uuids = it.GetUuids();
-                if (uuids != null)
+                UUID SSP = UUID.FromString("00001101-0000-1000-8000-00805F9B34FB");
+                //Read manufacturer spesific UUID from file.
+                string[] rows;
+                using (var reader = new System.IO.StreamReader(_context.Assets.Open("devices.csv")))
                 {
-                    foreach (var uuid in uuids)
-                    {
-                        if (uuid != null && uuid.ToString() == SSP.ToString())
-                        {
-                            found = true;
-                            result.Add(it);
-                            break;
-                        }
-                    }
+                    rows = reader.ReadToEnd().Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);
                 }
-                if (!found)
+                //Add only devices that implement SSP or are defined in the devices file.
+                foreach (var it in devices)
                 {
-                    foreach (var row in rows)
+                    bool found = false;
+                    var uuids = it.GetUuids();
+                    if (uuids != null)
                     {
-                        if (!row.StartsWith("#"))
+                        foreach (var uuid in uuids)
                         {
-                            var cells = row.Split(';');
-                            if (cells.Length != 2)
+                            if (uuid != null && uuid.ToString() == SSP.ToString())
                             {
-                                throw new ArgumentException("Invalid device. " + row);
-                            }
-                            if (string.Compare(cells[0], it.Name, true) == 0)
-                            {
+                                found = true;
                                 result.Add(it);
                                 break;
+                            }
+                        }
+                    }
+                    if (!found)
+                    {
+                        foreach (var row in rows)
+                        {
+                            if (!row.StartsWith("#"))
+                            {
+                                var cells = row.Split(';');
+                                if (cells.Length != 2)
+                                {
+                                    throw new ArgumentException("Invalid device. " + row);
+                                }
+                                if (string.Compare(cells[0], it.Name, true) == 0)
+                                {
+                                    result.Add(it);
+                                    break;
+                                }
                             }
                         }
                     }
