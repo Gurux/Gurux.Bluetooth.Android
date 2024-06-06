@@ -61,6 +61,7 @@
     <Compile Include="Shared\GXSynchronousMediaBase.cs" />
   </ItemGroup>
   <ItemGroup>
+    <AndroidAsset Include="Assets\devices.csv" />
     <None Include="Resources\AboutResources.txt" />
   </ItemGroup>
   <ItemGroup>

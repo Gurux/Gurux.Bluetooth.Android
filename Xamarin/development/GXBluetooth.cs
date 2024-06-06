@@ -50,9 +50,6 @@ using Android.Content.PM;
 using AndroidX.Core.App;
 using Gurux.Common.Enums;
 using Android.Locations;
-using Android.Hardware.Usb;
-using static Android.Bluetooth.BluetoothClass;
-using Android.Companion;
 
 [assembly: UsesFeature("android.hardware.bluetooth")]
 [assembly: UsesPermission("android.permission.BLUETOOTH")]
@@ -82,7 +79,6 @@ namespace Gurux.Bluetooth
     /// </summary>
     public class GXBluetooth : IGXMedia2, IDisposable
     {
-
         Task _receiver = null;
 
         /// <summary>
@@ -95,7 +91,7 @@ namespace Gurux.Bluetooth
         public ManualResetEvent _closed = new ManualResetEvent(false);
 
         BluetoothDevice _device;
-        private Context _contect;
+        private Context _context;
         private DeviceAddEventHandler _OnDeviceAdd;
         private DeviceRemoveEventHandler _OnDeviceRemove;
 
@@ -118,10 +114,10 @@ namespace Gurux.Bluetooth
         /// </summary>
         public GXBluetooth(Context contect)
         {
-            _contect = contect;
+            _context = contect;
             _Receiver = new GXBluetoothReciever(this);
             IntentFilter filter = new IntentFilter();
-            filter.AddAction(BluetoothDevice.ActionFound);           
+            filter.AddAction(BluetoothDevice.ActionFound);
             contect.RegisterReceiver(_Receiver, new IntentFilter(filter));
             _syncBase = new GXSynchronousMediaBase(1024);
             BluetoothManager manager = (BluetoothManager)contect.GetSystemService(Context.BluetoothService);
@@ -150,26 +146,26 @@ namespace Gurux.Bluetooth
 
         private bool CheckAccessRights()
         {
-            if (_contect is Activity activity)
+            if (_context is Activity activity)
             {
                 List<string> missing = new List<string>();
-                if (Permission.Denied == _contect.CheckSelfPermission("android.permission.BLUETOOTH"))
+                if (Permission.Denied == _context.CheckSelfPermission("android.permission.BLUETOOTH"))
                 {
                     missing.Add("android.permission.BLUETOOTH");
                 }
-                if (Permission.Denied == _contect.CheckSelfPermission("android.permission.BLUETOOTH_CONNECT"))
+                if (Permission.Denied == _context.CheckSelfPermission("android.permission.BLUETOOTH_CONNECT"))
                 {
                     missing.Add("android.permission.BLUETOOTH_CONNECT");
                 }
-                if (Permission.Denied == _contect.CheckSelfPermission("android.permission.BLUETOOTH_SCAN"))
+                if (Permission.Denied == _context.CheckSelfPermission("android.permission.BLUETOOTH_SCAN"))
                 {
                     missing.Add("android.permission.BLUETOOTH_SCAN");
                 }
-                if (Permission.Denied == _contect.CheckSelfPermission("android.permission.ACCESS_COARSE_LOCATION"))
+                if (Permission.Denied == _context.CheckSelfPermission("android.permission.ACCESS_COARSE_LOCATION"))
                 {
                     missing.Add("android.permission.ACCESS_COARSE_LOCATION");
                 }
-                if (Permission.Denied == _contect.CheckSelfPermission("android.permission.ACCESS_FINE_LOCATION"))
+                if (Permission.Denied == _context.CheckSelfPermission("android.permission.ACCESS_FINE_LOCATION"))
                 {
                     missing.Add("android.permission.ACCESS_FINE_LOCATION");
                 }
@@ -239,18 +235,57 @@ namespace Gurux.Bluetooth
 
         internal void AddDevice(BluetoothDevice device)
         {
-            //Check that device doesn't exist.
-            foreach (var it in GetDevices())
+            UUID SSP = UUID.FromString("00001101-0000-1000-8000-00805F9B34FB");
+            bool found = false;
+            if (device.BondState == Bond.None)
             {
-                if (it.Address == device.Address)
+                device.FetchUuidsWithSdp();
+            }
+            var uuids = device.GetUuids();
+            if (uuids != null)
+            {
+                foreach (var it in uuids)
                 {
-                    return;
+                    if (it.Uuid.ToString() == SSP.ToString())
+                    {
+                        //SSP found.
+                        found = true;
+                        break;
+                    }
                 }
             }
-            _devices.Add(device);
-            _OnDeviceAdd?.Invoke(device);
+            if (!found && uuids != null)
+            {
+                //Read manufacturer spesific UUID from file.
+                string[] rows;
+                using (var reader = new System.IO.StreamReader(_context.Assets.Open("devices.csv")))
+                {
+                    rows = reader.ReadToEnd().Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);
+                }
+                //Add only devices that implement SSP or are defined in the devices file.
+                foreach (var uuid in uuids)
+                {
+                    if (uuid != null && uuid.ToString() == SSP.ToString())
+                    {
+                        found = true;
+                        break;
+                    }
+                }
+            }
+            if (found)
+            {
+                //Check that device doesn't exist.
+                foreach (var it in GetDevices())
+                {
+                    if (it.Name == device.Name)
+                    {
+                        return;
+                    }
+                }
+                _devices.Add(device);
+                _OnDeviceAdd?.Invoke(device);
+            }
         }
-
         internal void NotifyError(System.Exception ex)
         {
             if (m_OnError != null)
@@ -428,7 +463,7 @@ namespace Gurux.Bluetooth
         /// <returns></returns>
         public void Scan()
         {
-            BluetoothManager manager = (BluetoothManager)_contect.GetSystemService(Context.BluetoothService);
+            BluetoothManager manager = (BluetoothManager)_context.GetSystemService(Context.BluetoothService);
             if (manager.Adapter.IsDiscovering)
             {
                 manager.Adapter.CancelDiscovery();
@@ -445,7 +480,7 @@ namespace Gurux.Bluetooth
         /// <returns></returns>
         public void StopScan()
         {
-            BluetoothManager manager = (BluetoothManager)_contect.GetSystemService(Context.BluetoothService);
+            BluetoothManager manager = (BluetoothManager)_context.GetSystemService(Context.BluetoothService);
             if (manager.Adapter.IsDiscovering)
             {
                 manager.Adapter.CancelDiscovery();
@@ -458,7 +493,15 @@ namespace Gurux.Bluetooth
         /// <returns></returns>
         public string GetInfo()
         {
-            BluetoothDevice device = GetDevice();
+            return GetInfo(GetDevice());
+        }
+
+        /// <summary>
+        /// Returns bluetooth device information.
+        /// </summary>
+        /// <returns></returns>
+        internal static string GetInfo(BluetoothDevice device)
+        {
             StringBuilder sb = new StringBuilder();
             if (device != null)
             {
@@ -475,6 +518,10 @@ namespace Gurux.Bluetooth
                 sb.Append("Addres: ");
                 sb.AppendLine(device.Address);
                 sb.AppendLine("");
+                if (device.BondState == Bond.None)
+                {
+                    device.FetchUuidsWithSdp();
+                }
                 sb.AppendLine("UUIDs: ");
                 var list = device.GetUuids();
                 if (list != null)
@@ -534,16 +581,64 @@ namespace Gurux.Bluetooth
                 return new BluetoothDevice[0];
             }
             List<BluetoothDevice> devices = new List<BluetoothDevice>();
-            BluetoothManager manager = (BluetoothManager)_contect.GetSystemService(Context.BluetoothService);
+            BluetoothManager manager = (BluetoothManager)_context.GetSystemService(Context.BluetoothService);
+            if (manager.Adapter == null)
+            {
+                throw new Exception("Bluetooth is not available.");
+            }
             var list = manager.GetConnectedDevices(ProfileType.Gatt);
             devices.AddRange(list);
             list = manager.GetConnectedDevices(ProfileType.GattServer);
             devices.AddRange(list);
             devices.AddRange(manager.Adapter.BondedDevices);
+            List<BluetoothDevice> result = new List<BluetoothDevice>();
+            UUID SSP = UUID.FromString("00001101-0000-1000-8000-00805F9B34FB");
+            //Read manufacturer spesific UUID from file.
+            string[] rows;
+            using (var reader = new System.IO.StreamReader(_context.Assets.Open("devices.csv")))
+            {
+                rows = reader.ReadToEnd().Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);
+            }
+            //Add only devices that implement SSP or are defined in the devices file.
+            foreach (var it in devices)
+            {
+                bool found = false;
+                var uuids = it.GetUuids();
+                if (uuids != null)
+                {
+                    foreach (var uuid in uuids)
+                    {
+                        if (uuid != null && uuid.ToString() == SSP.ToString())
+                        {
+                            found = true;
+                            result.Add(it);
+                            break;
+                        }
+                    }
+                }
+                if (!found)
+                {
+                    foreach (var row in rows)
+                    {
+                        if (!row.StartsWith("#"))
+                        {
+                            var cells = row.Split(';');
+                            if (cells.Length != 2)
+                            {
+                                throw new ArgumentException("Invalid device. " + row);
+                            }
+                            if (string.Compare(cells[0], it.Name, true) == 0)
+                            {
+                                result.Add(it);
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
             //Add scanned devices.
-            devices.AddRange(_devices);
-            //manager.Adapter.GetRemoteLeDevice
-            return devices.ToArray();
+            result.AddRange(_devices);
+            return result.ToArray();
         }
 
         /// <summary>
@@ -575,9 +670,9 @@ namespace Gurux.Bluetooth
                     m_OnTrace(this, new TraceEventArgs(TraceTypes.Info,
                             "Settings: Device: " + Device, null));
                 }
-                //bluetooth.
-                UUID Ssp = UUID.FromString("00001101-0000-1000-8000-00805F9B34FB");
-                BluetoothManager manager = (BluetoothManager)_contect.GetSystemService(Context.BluetoothService);
+                //Default Bluetooth serial port profile.
+                UUID SSP = UUID.FromString("00001101-0000-1000-8000-00805F9B34FB");
+                BluetoothManager manager = (BluetoothManager)_context.GetSystemService(Context.BluetoothService);
                 if (manager.Adapter == null)
                 {
                     throw new Exception("Bluetooth is not available.");
@@ -585,11 +680,51 @@ namespace Gurux.Bluetooth
                 manager.Adapter.CancelDiscovery();
                 if (_device.BondState == Bond.None)
                 {
-                    _socket = _device.CreateInsecureRfcommSocketToServiceRecord(Ssp);
+                    _device.FetchUuidsWithSdp();
+                }
+                bool sspFound = false;
+                if (_device.GetUuids() != null)
+                {
+                    foreach (var it in _device.GetUuids())
+                    {
+                        if (it.Uuid.ToString() == SSP.ToString())
+                        {
+                            //SSP found.
+                            sspFound = true;
+                            break;
+                        }
+                    }
+                }
+                if (!sspFound)
+                {
+                    //Read manufacturer spesific UUID from file.
+                    using (var reader = new System.IO.StreamReader(_context.Assets.Open("devices.csv")))
+                    {
+                        foreach (var row in reader.ReadToEnd().Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries))
+                        {
+                            if (!row.StartsWith("#"))
+                            {
+                                var cells = row.Split(';');
+                                if (cells.Length != 2)
+                                {
+                                    throw new ArgumentException("Invalid device. " + row);
+                                }
+                                if (string.Compare(cells[0], _device.Name, true) == 0)
+                                {
+                                    SSP = UUID.FromString(cells[1]);
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+                if (_device.BondState == Bond.None)
+                {
+                    _socket = _device.CreateInsecureRfcommSocketToServiceRecord(SSP);
                 }
                 else
                 {
-                    _socket = _device.CreateRfcommSocketToServiceRecord(Ssp);
+                    _socket = _device.CreateRfcommSocketToServiceRecord(SSP);
                 }
                 _socket.Connect();
                 _receiver = Task.Run(() =>
@@ -1054,10 +1189,10 @@ namespace Gurux.Bluetooth
             {
                 Close();
             }
-            if (_contect != null)
+            if (_context != null)
             {
-                _contect.UnregisterReceiver(_Receiver);
-                _contect = null;
+                _context.UnregisterReceiver(_Receiver);
+                _context = null;
             }
         }
 

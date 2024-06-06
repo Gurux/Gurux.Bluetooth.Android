@@ -100,7 +100,7 @@ namespace Gurux.Bluetooth
                     string info = "";
                     if (device != null)
                     {
-                        info = device.ToString();
+                        info = GXBluetooth.GetInfo(device);
                     }
                     new AlertDialog.Builder(infoBtn.RootView.Context)
                             .SetTitle("Info")
