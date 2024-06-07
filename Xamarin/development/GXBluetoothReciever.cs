@@ -32,6 +32,10 @@
 
 using Android.Bluetooth;
 using Android.Content;
+using Android.Nfc;
+using Android.Util;
+using System;
+using System.Text;
 
 namespace Gurux.Bluetooth
 {
@@ -50,13 +54,31 @@ namespace Gurux.Bluetooth
 
         public override void OnReceive(Context context, Intent intent)
         {
-            if (BluetoothDevice.ActionFound == intent.Action)
+            try
             {
-                // GetParcelableExtra throws expeption in Xamaring. Don't use it.
-                // BluetoothDevice device = (BluetoothDevice)intent.GetParcelableExtra(BluetoothDevice.ExtraDevice,
-                // Java.Lang.Class.FromType(typeof(BluetoothDevice)));
-                BluetoothDevice device = (BluetoothDevice)intent.GetParcelableExtra(BluetoothDevice.ExtraDevice);
-                _bluetooth.AddDevice(device);
+                if (BluetoothDevice.ActionFound == intent.Action)
+                {
+                    // GetParcelableExtra throws expeption in Xamaring. Don't use it.
+                    // BluetoothDevice device = (BluetoothDevice)intent.GetParcelableExtra(BluetoothDevice.ExtraDevice,
+                    // Java.Lang.Class.FromType(typeof(BluetoothDevice)));
+                    BluetoothDevice device = (BluetoothDevice)intent.GetParcelableExtra(BluetoothDevice.ExtraDevice);
+                    //Add only devices that are not already paired.
+                    if (device.BondState != Bond.Bonded)
+                    {
+                        _bluetooth.AddDevice(device);
+                    }
+                }
+                else if (BluetoothDevice.ActionPairingRequest == intent.Action)
+                {
+                    BluetoothDevice device = (BluetoothDevice)intent.GetParcelableExtra(BluetoothDevice.ExtraDevice);
+                    int pin = intent.GetIntExtra(BluetoothDevice.ExtraPairingKey, 1234);
+                    device.SetPin(ASCIIEncoding.UTF8.GetBytes(pin.ToString()));
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Error("Gurux.Bluetooth", ex.Message);
+                _bluetooth.NotifyError(ex);
             }
         }
     }

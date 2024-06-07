@@ -118,6 +118,7 @@ namespace Gurux.Bluetooth
             _Receiver = new GXBluetoothReciever(this);
             IntentFilter filter = new IntentFilter();
             filter.AddAction(BluetoothDevice.ActionFound);
+            filter.AddAction(BluetoothDevice.ActionPairingRequest);
             contect.RegisterReceiver(_Receiver, new IntentFilter(filter));
             _syncBase = new GXSynchronousMediaBase(1024);
             BluetoothManager manager = (BluetoothManager)contect.GetSystemService(Context.BluetoothService);
