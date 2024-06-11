@@ -61,7 +61,7 @@ namespace Gurux.Bluetooth
             //Select first device if it's not selected.
             if (_bluetooth.GetDevice() == null)
             {
-                BluetoothDevice[] devices = _bluetooth.GetDevices();
+                GXBluetoothDevice[] devices = _bluetooth.GetDevices();
                 if (devices.Any())
                 {
                     _bluetooth.SetDevice(devices[0]);
@@ -90,10 +90,10 @@ namespace Gurux.Bluetooth
             //Add scanned bluetooth devices.
             adapter = new ArrayAdapter<string>(activity,
                     Resource.Layout.support_simple_spinner_dropdown_item, _devices);
-            _scannedDevices.Adapter = adapter;          
+            _scannedDevices.Adapter = adapter;
         }
 
-        private void Bluetooth_OnDeviceAdd(BluetoothDevice device)
+        private void Bluetooth_OnDeviceAdd(GXBluetooth sender, GXBluetoothDevice device)
         {
             _devices.Add(device.Name);
             //Add scanned bluetooth devices.

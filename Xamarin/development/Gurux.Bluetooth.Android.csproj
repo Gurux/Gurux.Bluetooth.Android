@@ -49,6 +49,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="GXBatteryInfo.cs" />
+    <Compile Include="GXBluetoothDevice.cs" />
+    <Compile Include="GXBluetoothGattCallback.cs" />
     <Compile Include="GXBluetoothReciever.cs" />
     <Compile Include="GXPropertiesFragment.cs" />
     <Compile Include="GXPropertiesBase.cs" />

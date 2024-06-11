@@ -50,6 +50,8 @@ using Android.Content.PM;
 using AndroidX.Core.App;
 using Gurux.Common.Enums;
 using Android.Locations;
+using static Android.Bluetooth.BluetoothClass;
+using Android.Text.Style;
 
 [assembly: UsesFeature("android.hardware.bluetooth")]
 [assembly: UsesPermission("android.permission.BLUETOOTH")]
@@ -64,14 +66,30 @@ namespace Gurux.Bluetooth
     /// <summary>
     /// Called when the when new bluetooth device is found.
     /// </summary>
+    /// <param name="sender">Sender.</param>
     /// <param name="device">Added bluetooth deviec.</param>
-    public delegate void DeviceAddEventHandler(BluetoothDevice device);
+    public delegate void DeviceAddEventHandler(GXBluetooth sender, GXBluetoothDevice device);
 
     /// <summary>
     /// Called when the when bluetooth device is removed.
     /// </summary>
+    /// <param name="sender">Sender.</param>
     /// <param name="device">Removed bluetooth device.</param>
-    public delegate void DeviceRemoveEventHandler(BluetoothDevice device);
+    public delegate void DeviceRemoveEventHandler(GXBluetooth sender, GXBluetoothDevice device);
+
+    /// <summary>
+    /// Called when the when bluetooth battery capacity is changed.
+    /// </summary>
+    /// <param name="sender">Sender.</param>
+    /// <param name="device">Bluetooth battery information.</param>
+    public delegate void BatteryCapacityEventHandler(GXBluetooth sender, GXBluetoothDevice device);
+
+    /// <summary>
+    /// Called when the when bluetooth Received Signal Strength Indication is changed.
+    /// </summary>
+    /// <param name="sender">Sender.</param>
+    /// <param name="device">Bluetooth device.</param>
+    public delegate void BluetoothRssiEventHandler(GXBluetooth sender, GXBluetoothDevice device);
 
     /// <summary>
     /// A media component that enables communication of bluetooth for Android devices.
@@ -89,11 +107,14 @@ namespace Gurux.Bluetooth
         /// Is bluetooth received closed.
         /// </summary>
         public ManualResetEvent _closed = new ManualResetEvent(false);
-
-        BluetoothDevice _device;
+        GXBluetoothGattCallback _gattCallback = null;
+        BluetoothGatt _bluetoothGatt = null;
+        internal GXBluetoothDevice _device;
         private Context _context;
         private DeviceAddEventHandler _OnDeviceAdd;
         private DeviceRemoveEventHandler _OnDeviceRemove;
+        internal BatteryCapacityEventHandler _OnBatteryCapacity;
+        internal BluetoothRssiEventHandler _OnBluetoothRssi;
 
         private object m_sync = new object();
         int LastEopPos = 0;
@@ -104,10 +125,11 @@ namespace Gurux.Bluetooth
         readonly object m_Synchronous = new object();
         BluetoothSocket _socket;
         private readonly GXBluetoothReciever _Receiver;
+
         /// <summary>
         /// Not binded devices.
         /// </summary>
-        private readonly List<BluetoothDevice> _devices = new List<BluetoothDevice>();
+        private readonly List<GXBluetoothDevice> _devices = new List<GXBluetoothDevice>();
 
         /// <summary>
         /// Constructor.
@@ -119,6 +141,9 @@ namespace Gurux.Bluetooth
             IntentFilter filter = new IntentFilter();
             filter.AddAction(BluetoothDevice.ActionFound);
             filter.AddAction(BluetoothDevice.ActionPairingRequest);
+            filter.AddAction(BluetoothDevice.ActionNameChanged);
+            filter.AddAction(BluetoothDevice.ActionNameChanged);
+            filter.AddAction(BluetoothDevice.ExtraRssi);
             contect.RegisterReceiver(_Receiver, new IntentFilter(filter));
             _syncBase = new GXSynchronousMediaBase(1024);
             BluetoothManager manager = (BluetoothManager)contect.GetSystemService(Context.BluetoothService);
@@ -142,7 +167,6 @@ namespace Gurux.Bluetooth
                     activity.StartActivityForResult(new Intent(LocationManager.ExtraLocationEnabled), 1);
                 }
             }
-            GetDevices();
         }
 
         private bool CheckAccessRights()
@@ -210,6 +234,36 @@ namespace Gurux.Bluetooth
         }
 
         /// <summary>
+        /// Bluetooth battery level is notified.
+        /// </summary>
+        public event BatteryCapacityEventHandler OnBatteryLevel
+        {
+            add
+            {
+                _OnBatteryCapacity += value;
+            }
+            remove
+            {
+                _OnBatteryCapacity -= value;
+            }
+        }
+
+        /// <summary>
+        /// Called when the when bluetooth Received Signal Strength Indication is notified.
+        /// </summary>
+        public event BluetoothRssiEventHandler OnBluetoothRssi
+        {
+            add
+            {
+                _OnBluetoothRssi += value;
+            }
+            remove
+            {
+                _OnBluetoothRssi -= value;
+            }
+        }
+
+        /// <summary>
         /// Constructor.
         /// </summary>
         /// <param name="activity">Activity.</param>
@@ -224,7 +278,7 @@ namespace Gurux.Bluetooth
         /// <param name="device">Bluetooth device name.</param>
         public GXBluetooth(Context context, string device) : this(context)
         {
-            foreach (BluetoothDevice it in GetDevices())
+            foreach (GXBluetoothDevice it in GetDevices())
             {
                 if (string.Compare(device, it.Name, true) == 0)
                 {
@@ -234,7 +288,19 @@ namespace Gurux.Bluetooth
             }
         }
 
-        internal void AddDevice(BluetoothDevice device)
+        internal GXBluetoothDevice FindDevice(BluetoothDevice value)
+        {
+            foreach (var it in GetDevices())
+            {
+                if (it.Name == value.Name)
+                {
+                    return it;
+                }
+            }
+            return null;
+        }
+
+        internal void AddDevice(GXBluetoothDevice device)
         {
             bool found = !ShowOnlySerialPorts;
             if (ShowOnlySerialPorts)
@@ -266,12 +332,27 @@ namespace Gurux.Bluetooth
                         rows = reader.ReadToEnd().Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);
                     }
                     //Add only devices that implement SSP or are defined in the devices file.
-                    foreach (var uuid in uuids)
+                    foreach (var row in rows)
                     {
-                        if (uuid != null && uuid.ToString() == SSP.ToString())
+                        if (!row.StartsWith("#"))
                         {
-                            found = true;
-                            break;
+                            var cells = row.Split(';');
+                            if (cells.Length != 4)
+                            {
+                                throw new ArgumentException("Invalid device. " + row);
+                            }
+                            string name = cells[0].Trim();
+                            bool contains = name.EndsWith("*");
+                            if (contains)
+                            {
+                                name = name.Substring(0, name.Length - 1);
+                            }
+                            if (string.Compare(name, device.Name, true) == 0 ||
+                                (contains && device.Name.Contains(name)))
+                            {
+                                found = true;
+                                break;
+                            }
                         }
                     }
                 }
@@ -281,16 +362,17 @@ namespace Gurux.Bluetooth
                 //Check that device doesn't exist.
                 foreach (var it in GetDevices())
                 {
-                    if (it.Name == device.Name)
+                    if (it._device != null &&
+                        it.Name == device.Name)
                     {
                         return;
                     }
                 }
                 _devices.Add(device);
-                _OnDeviceAdd?.Invoke(device);
+                _OnDeviceAdd?.Invoke(this, device);
             }
         }
-        internal void NotifyError(System.Exception ex)
+        internal void NotifyError(Exception ex)
         {
             if (m_OnError != null)
             {
@@ -302,7 +384,7 @@ namespace Gurux.Bluetooth
             }
         }
 
-        void NotifyMediaStateChange(MediaState state)
+        internal void NotifyMediaStateChange(MediaState state)
         {
             if (m_Trace >= TraceLevel.Info && m_OnTrace != null)
             {
@@ -342,7 +424,7 @@ namespace Gurux.Bluetooth
             set;
         }
 
-        private void HandleReceivedData(int index, byte[] buffer, int totalCount)
+        internal void HandleReceivedData(int index, byte[] buffer, int totalCount)
         {
             lock (_syncBase.receivedSync)
             {
@@ -353,8 +435,8 @@ namespace Gurux.Bluetooth
                     {
                         foreach (object it in (Array)Eop)
                         {
-                            eop = Gurux.Common.GXCommon.GetAsByteArray(it);
-                            totalCount = Gurux.Common.GXCommon.IndexOf(_syncBase.m_Received, eop, index, _syncBase.receivedSize);
+                            eop = Common.GXCommon.GetAsByteArray(it);
+                            totalCount = Common.GXCommon.IndexOf(_syncBase.m_Received, eop, index, _syncBase.receivedSize);
                             if (totalCount != -1)
                             {
                                 break;
@@ -453,12 +535,22 @@ namespace Gurux.Bluetooth
                 if (change)
                 {
                     _device = null;
-                    foreach (BluetoothDevice it in GetDevices())
+                    if (!string.IsNullOrEmpty(value))
                     {
-                        if (it.Name == value)
+                        foreach (BluetoothDevice it in GetDevices())
                         {
-                            _device = it;
-                            break;
+                            if (it.Name == value)
+                            {
+                                _device = it;
+                                break;
+                            }
+                        }
+                        if (_device == null)
+                        {
+                            _device = new GXBluetoothDevice()
+                            {
+                                Name = value
+                            };
                         }
                     }
                     NotifyPropertyChanged("Device");
@@ -469,7 +561,7 @@ namespace Gurux.Bluetooth
         /// <summary>
         /// Gets or sets the Bluetooth device.
         /// </summary>
-        public BluetoothDevice GetDevice()
+        public GXBluetoothDevice GetDevice()
         {
             return _device;
         }
@@ -517,7 +609,7 @@ namespace Gurux.Bluetooth
         /// Returns bluetooth device information.
         /// </summary>
         /// <returns></returns>
-        internal static string GetInfo(BluetoothDevice device)
+        internal static string GetInfo(GXBluetoothDevice device)
         {
             StringBuilder sb = new StringBuilder();
             if (device != null)
@@ -534,6 +626,9 @@ namespace Gurux.Bluetooth
                 }
                 sb.Append("Addres: ");
                 sb.AppendLine(device.Address);
+                sb.AppendLine("");
+                sb.Append("RSSI: ");
+                sb.AppendLine(device.Rssi.ToString());
                 sb.AppendLine("");
                 if (device.BondState == Bond.None)
                 {
@@ -555,7 +650,7 @@ namespace Gurux.Bluetooth
         /// <summary>
         /// Gets or sets the Bluetooth device.
         /// </summary>
-        internal void SetDevice(BluetoothDevice value)
+        internal void SetDevice(GXBluetoothDevice value)
         {
             _device = value;
         }
@@ -565,12 +660,28 @@ namespace Gurux.Bluetooth
         /// </summary>
         public void Close()
         {
-            if (_receiver != null && !_receiver.IsCompleted)
+            if (_bluetoothGatt == null && _receiver != null && !_receiver.IsCompleted)
             {
                 _closing.Set();
                 _closed.WaitOne(1000);
                 _closed.Reset();
                 _receiver = null;
+            }
+            if (_bluetoothGatt != null)
+            {
+                NotifyMediaStateChange(MediaState.Closing);
+                try
+                {
+                    _bluetoothGatt.Close();
+                    _bluetoothGatt.Dispose();
+                }
+                catch (Exception ex)
+                {
+                    NotifyError(ex);
+                }
+                _bluetoothGatt = null;
+                _gattCallback = null;
+                NotifyMediaStateChange(MediaState.Closed);
             }
             if (_socket != null)
             {
@@ -591,24 +702,39 @@ namespace Gurux.Bluetooth
         /// Gets an array of availble bluetooth devices.
         /// </summary>
         /// <returns></returns>
-        public BluetoothDevice[] GetDevices()
+        public GXBluetoothDevice[] GetDevices()
         {
             if (CheckAccessRights())
             {
-                return new BluetoothDevice[0];
+                return new GXBluetoothDevice[0];
             }
-            List<BluetoothDevice> devices = new List<BluetoothDevice>();
+            List<GXBluetoothDevice> devices = new List<GXBluetoothDevice>();
             BluetoothManager manager = (BluetoothManager)_context.GetSystemService(Context.BluetoothService);
             if (manager.Adapter == null)
             {
                 throw new Exception("Bluetooth is not available.");
             }
+            if (_device != null && _device._device == null)
+            {
+                //Add device that is not bonded.
+                //This happens during initialization, when using an unbonded device.
+                devices.Add(_device);
+            }
             var list = manager.GetConnectedDevices(ProfileType.Gatt);
-            devices.AddRange(list);
+            foreach (var it in list)
+            {
+                devices.Add(it);
+            }
             list = manager.GetConnectedDevices(ProfileType.GattServer);
-            devices.AddRange(list);
-            devices.AddRange(manager.Adapter.BondedDevices);
-            List<BluetoothDevice> result = new List<BluetoothDevice>();
+            foreach (var it in list)
+            {
+                devices.Add(it);
+            }
+            foreach (var it in manager.Adapter.BondedDevices)
+            {
+                devices.Add(it);
+            }
+            List<GXBluetoothDevice> result = new List<GXBluetoothDevice>();
             if (!ShowOnlySerialPorts)
             {
                 result.AddRange(devices);
@@ -646,11 +772,18 @@ namespace Gurux.Bluetooth
                             if (!row.StartsWith("#"))
                             {
                                 var cells = row.Split(';');
-                                if (cells.Length != 2)
+                                if (cells.Length != 4)
                                 {
                                     throw new ArgumentException("Invalid device. " + row);
                                 }
-                                if (string.Compare(cells[0], it.Name, true) == 0)
+                                string name = cells[0].Trim();
+                                bool contains = name.EndsWith("*");
+                                if (contains)
+                                {
+                                    name = name.Substring(0, name.Length - 1);
+                                }
+                                if (string.Compare(name, it.Name, true) == 0 ||
+                                    (contains && it.Name.Contains(name)))
                                 {
                                     result.Add(it);
                                     break;
@@ -664,6 +797,102 @@ namespace Gurux.Bluetooth
             result.AddRange(_devices);
             return result.ToArray();
         }
+
+        /// <summary>
+        /// Searched device.
+        /// </summary>
+        internal GXBluetoothDevice SearchDevice;
+
+        internal void InitializeDevice()
+        {
+            //Default Bluetooth serial port profile.
+            UUID SSP = UUID.FromString("00001101-0000-1000-8000-00805F9B34FB");
+            if (_device.BondState == Bond.None)
+            {
+                ((BluetoothDevice)_device).FetchUuidsWithSdp();
+            }
+            bool sspFound = false;
+            if (_device.GetUuids() != null)
+            {
+                foreach (var it in _device.GetUuids())
+                {
+                    if (it.Uuid.ToString() == SSP.ToString())
+                    {
+                        //SSP found.
+                        sspFound = true;
+                        break;
+                    }
+                }
+            }
+            if (!sspFound)
+            {
+                //Read manufacturer spesific UUID from file.
+                using (var reader = new System.IO.StreamReader(_context.Assets.Open("devices.csv")))
+                {
+                    foreach (var row in reader.ReadToEnd().Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries))
+                    {
+                        if (!row.StartsWith("#"))
+                        {
+                            var cells = row.Split(';');
+                            if (cells.Length != 4)
+                            {
+                                throw new ArgumentException("Invalid device. " + row);
+                            }
+                            string name = cells[0].Trim();
+                            bool contains = name.EndsWith("*");
+                            if (contains)
+                            {
+                                name = name.Substring(0, name.Length - 1);
+                            }
+                            if (string.Compare(name, _device.Name, true) == 0 ||
+                                (contains && _device.Name.Contains(name)))
+                            {
+                                _gattCallback = new GXBluetoothGattCallback(_context, this);
+                                _bluetoothGatt = ((BluetoothDevice)_device).ConnectGatt(_context, false, _gattCallback, BluetoothTransports.Le);
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+            if (_bluetoothGatt == null)
+            {
+                if (_device.BondState == Bond.None)
+                {
+                    _socket = ((BluetoothDevice)_device).CreateInsecureRfcommSocketToServiceRecord(SSP);
+                }
+                else
+                {
+                    _socket = ((BluetoothDevice)_device).CreateRfcommSocketToServiceRecord(SSP);
+                }
+                _socket.Connect();
+                _receiver = Task.Run(() =>
+                {
+                    byte[] tmp = new byte[1024];
+                    while (!_closing.WaitOne(0))
+                    {
+                        try
+                        {
+                            int count = _socket.InputStream.Read(tmp, 0, tmp.Length);
+                            if (count != 0)
+                            {
+                                HandleReceivedData(0, tmp, count);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            if (!_closing.WaitOne(0))
+                            {
+                                NotifyError(ex);
+                            }
+                        }
+                    }
+                    _closed.Set();
+                });
+            }
+            NotifyMediaStateChange(MediaState.Open);
+        }
+
 
         /// <summary>
         /// Opens a new bluetooth connection.
@@ -694,89 +923,22 @@ namespace Gurux.Bluetooth
                     m_OnTrace(this, new TraceEventArgs(TraceTypes.Info,
                             "Settings: Device: " + Device, null));
                 }
-                //Default Bluetooth serial port profile.
-                UUID SSP = UUID.FromString("00001101-0000-1000-8000-00805F9B34FB");
                 BluetoothManager manager = (BluetoothManager)_context.GetSystemService(Context.BluetoothService);
                 if (manager.Adapter == null)
                 {
                     throw new Exception("Bluetooth is not available.");
                 }
                 manager.Adapter.CancelDiscovery();
-                if (_device.BondState == Bond.None)
+                //Search unbonded device.
+                if (_device._device == null)
                 {
-                    _device.FetchUuidsWithSdp();
+                    SearchDevice = _device;
+                    Scan();
+                    return;
                 }
-                bool sspFound = false;
-                if (_device.GetUuids() != null)
-                {
-                    foreach (var it in _device.GetUuids())
-                    {
-                        if (it.Uuid.ToString() == SSP.ToString())
-                        {
-                            //SSP found.
-                            sspFound = true;
-                            break;
-                        }
-                    }
-                }
-                if (!sspFound)
-                {
-                    //Read manufacturer spesific UUID from file.
-                    using (var reader = new System.IO.StreamReader(_context.Assets.Open("devices.csv")))
-                    {
-                        foreach (var row in reader.ReadToEnd().Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries))
-                        {
-                            if (!row.StartsWith("#"))
-                            {
-                                var cells = row.Split(';');
-                                if (cells.Length != 2)
-                                {
-                                    throw new ArgumentException("Invalid device. " + row);
-                                }
-                                if (string.Compare(cells[0], _device.Name, true) == 0)
-                                {
-                                    SSP = UUID.FromString(cells[1]);
-                                    break;
-                                }
-                            }
-                        }
-                    }
-                }
-                if (_device.BondState == Bond.None)
-                {
-                    _socket = _device.CreateInsecureRfcommSocketToServiceRecord(SSP);
-                }
-                else
-                {
-                    _socket = _device.CreateRfcommSocketToServiceRecord(SSP);
-                }
-                _socket.Connect();
-                _receiver = Task.Run(() =>
-                {
-                    byte[] tmp = new byte[1024];
-                    while (!_closing.WaitOne(0))
-                    {
-                        try
-                        {
-                            int count = _socket.InputStream.Read(tmp, 0, tmp.Length);
-                            if (count != 0)
-                            {
-                                HandleReceivedData(0, tmp, count);
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            if (!_closing.WaitOne(0))
-                            {
-                                NotifyError(ex);
-                            }
-                        }
-                    }
-                    _closed.Set();
-                });
-                NotifyMediaStateChange(MediaState.Open);
+                InitializeDevice();
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 Close();
                 throw;
@@ -1159,7 +1321,14 @@ namespace Gurux.Bluetooth
             }
             if (buff.Any())
             {
-                _socket.OutputStream.Write(buff, 0, buff.Length);
+                if (_bluetoothGatt != null)
+                {
+                    _bluetoothGatt.WriteCharacteristic(_gattCallback.WriteCharacteristic, buff, (int)_gattCallback.WriteCharacteristic.WriteType);
+                }
+                else
+                {
+                    _socket.OutputStream.Write(buff, 0, buff.Length);
+                }
                 _bytesSent += (UInt64)buff.Length;
             }
         }

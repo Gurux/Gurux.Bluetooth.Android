@@ -96,7 +96,7 @@ namespace Gurux.Bluetooth
             {
                 try
                 {
-                    BluetoothDevice device = GXPropertiesBase.GetBluetooth().GetDevice();
+                    GXBluetoothDevice device = GXPropertiesBase.GetBluetooth().GetDevice();
                     string info = "";
                     if (device != null)
                     {

@@ -218,10 +218,8 @@ namespace Gurux.Bluetooth.Example
             try
             {
                 string open = GetString(Resource.String.open);
-                String close = GetString(Resource.String.close);
                 if (openBtn.Text == open)
                 {
-                    bluetooth.Device = (string)deviceList.SelectedItem;
                     bluetooth.Open();
                 }
                 else
@@ -334,16 +332,16 @@ namespace Gurux.Bluetooth.Example
         {
             Console.WriteLine("OnResume");
             deviceAdapter.Clear();
+            ReadSettings();
             if (bluetooth != null)
             {
-                foreach (BluetoothDevice it in bluetooth.GetDevices())
+                foreach (GXBluetoothDevice it in bluetooth.GetDevices())
                 {
                     deviceAdapter.Add(it.Name);
                 }
                 deviceAdapter.NotifyDataSetChanged();
             }
             openBtn.Enabled = deviceAdapter.Count != 0;
-            ReadSettings();
             base.OnResume();
         }
 
