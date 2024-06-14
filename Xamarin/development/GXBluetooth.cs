@@ -1323,6 +1323,10 @@ namespace Gurux.Bluetooth
             {
                 if (_bluetoothGatt != null)
                 {
+                    if (_gattCallback.WriteCharacteristic == null)
+                    {
+                        throw new Exception("GATT settings are not defined in the devices file.");
+                    }
                     _bluetoothGatt.WriteCharacteristic(_gattCallback.WriteCharacteristic, buff, (int)_gattCallback.WriteCharacteristic.WriteType);
                 }
                 else

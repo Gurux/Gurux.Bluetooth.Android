@@ -53,7 +53,7 @@ namespace Gurux.Bluetooth
         internal BluetoothGattCharacteristic WriteCharacteristic;
         internal BluetoothGattDescriptor ReadDescriptor;
         internal BluetoothGattCharacteristic BatteryCharacteristic;
-        
+
         /// <summary>
         /// Contructor.
         /// </summary>
@@ -94,6 +94,7 @@ namespace Gurux.Bluetooth
 
         public override void OnServicesDiscovered(BluetoothGatt gatt, [GeneratedEnum] GattStatus status)
         {
+            base.OnServicesDiscovered(gatt, status);
             BluetoothGattService service = gatt.GetService(BatteryServiceUuid);
             if (service != null)
             {
@@ -107,7 +108,6 @@ namespace Gurux.Bluetooth
                     gatt.ReadCharacteristic(BatteryCharacteristic);
                 }
             }
-            base.OnServicesDiscovered(gatt, status);
             //Read manufacturer spesific UUID from file.
             using (var reader = new System.IO.StreamReader(_context.Assets.Open("devices.csv")))
             {
@@ -120,7 +120,14 @@ namespace Gurux.Bluetooth
                         {
                             throw new ArgumentException("Invalid device. " + row);
                         }
-                        if (string.Compare(cells[0], _bluetooth._device.Name, true) == 0)
+                        string name = cells[0].Trim();
+                        bool contains = name.EndsWith("*");
+                        if (contains)
+                        {
+                            name = name.Substring(0, name.Length - 1);
+                        }
+                        if (string.Compare(name, _bluetooth._device.Name, true) == 0 ||
+                            (contains && _bluetooth._device.Name.Contains(name)))
                         {
                             UUID uuid = UUID.FromString(cells[1]);
                             service = gatt.GetService(uuid);
