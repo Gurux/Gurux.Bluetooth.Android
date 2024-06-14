@@ -68,95 +68,125 @@ namespace Gurux.Bluetooth
             byte[] value,
             [GeneratedEnum] GattStatus status)
         {
-            if (BatteryCharacteristic != null && characteristic.Uuid == BatteryCharacteristic.Uuid &&
-                _bluetooth._device != null)
+            base.OnCharacteristicRead(gatt, characteristic, value, status);
+            try
             {
-                _bluetooth._device.BatteryInfo.Capacity = value[0];
-                if (_bluetooth._OnBatteryCapacity != null)
+                if (BatteryCharacteristic != null && characteristic.Uuid == BatteryCharacteristic.Uuid &&
+                    _bluetooth._device != null)
                 {
-                    _bluetooth._OnBatteryCapacity.Invoke(_bluetooth, _bluetooth._device);
+                    _bluetooth._device.BatteryInfo.Capacity = value[0];
+                    if (_bluetooth._OnBatteryCapacity != null)
+                    {
+                        _bluetooth._OnBatteryCapacity.Invoke(_bluetooth, _bluetooth._device);
+                    }
                 }
             }
-            base.OnCharacteristicRead(gatt, characteristic, value, status);
+            catch (Exception ex)
+            {
+                if (_bluetooth != null)
+                {
+                    _bluetooth.NotifyError(ex);
+                }
+            }
         }
 
         public override void OnCharacteristicChanged(BluetoothGatt gatt,
             BluetoothGattCharacteristic characteristic, byte[] value)
         {
             base.OnCharacteristicChanged(gatt, characteristic, value);
-            if (ReadCharacteristic != null &&
-                characteristic.Uuid == ReadCharacteristic.Uuid &&
-                value != null && value.Any())
+            try
             {
-                _bluetooth.HandleReceivedData(0, value, value.Length);
+                if (ReadCharacteristic != null &&
+                    characteristic.Uuid == ReadCharacteristic.Uuid &&
+                    value != null && value.Any())
+                {
+                    _bluetooth.HandleReceivedData(0, value, value.Length);
+                }
+            }
+            catch (Exception ex)
+            {
+                if (_bluetooth != null)
+                {
+                    _bluetooth.NotifyError(ex);
+                }
             }
         }
 
         public override void OnServicesDiscovered(BluetoothGatt gatt, [GeneratedEnum] GattStatus status)
         {
             base.OnServicesDiscovered(gatt, status);
-            BluetoothGattService service = gatt.GetService(BatteryServiceUuid);
-            if (service != null)
+            try
             {
-                BatteryCharacteristic = service.GetCharacteristic(BatteryLevelCharacteristicUuid);
-                if (BatteryCharacteristic != null)
+                BluetoothGattService service = gatt.GetService(BatteryServiceUuid);
+                if (service != null)
                 {
-                    if (BatteryCharacteristic.Properties.HasFlag(GattProperty.Notify))
+                    BatteryCharacteristic = service.GetCharacteristic(BatteryLevelCharacteristicUuid);
+                    if (BatteryCharacteristic != null)
                     {
-                        gatt.SetCharacteristicNotification(BatteryCharacteristic, true);
+                        if (BatteryCharacteristic.Properties.HasFlag(GattProperty.Notify))
+                        {
+                            gatt.SetCharacteristicNotification(BatteryCharacteristic, true);
+                        }
+                        gatt.ReadCharacteristic(BatteryCharacteristic);
                     }
-                    gatt.ReadCharacteristic(BatteryCharacteristic);
+                }
+                //Read manufacturer spesific UUID from file.
+                using (var reader = new System.IO.StreamReader(_context.Assets.Open("devices.csv")))
+                {
+                    foreach (var row in reader.ReadToEnd().Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries))
+                    {
+                        if (!row.StartsWith("#"))
+                        {
+                            var cells = row.Split(';');
+                            if (cells.Length != 4)
+                            {
+                                throw new ArgumentException("Invalid device. " + row);
+                            }
+                            string name = cells[0].Trim();
+                            bool contains = name.EndsWith("*");
+                            if (contains)
+                            {
+                                name = name.Substring(0, name.Length - 1);
+                            }
+                            if (string.Compare(name, _bluetooth._device.Name, true) == 0 ||
+                                (contains && _bluetooth._device.Name.Contains(name)))
+                            {
+                                UUID uuid = UUID.FromString(cells[1]);
+                                service = gatt.GetService(uuid);
+                                if (service == null)
+                                {
+                                    throw new Exception("Unknown service. " + uuid);
+                                }
+                                //Get read characteristic.
+                                uuid = UUID.FromString(cells[2]);
+                                ReadCharacteristic = service.GetCharacteristic(uuid);
+                                if (ReadCharacteristic == null)
+                                {
+                                    throw new Exception("Unknown read characteristic. " + uuid);
+                                }
+                                if (ReadCharacteristic.Properties.HasFlag(GattProperty.Notify))
+                                {
+                                    gatt.SetCharacteristicNotification(ReadCharacteristic, true);
+                                }
+                                //Get write characteristic.
+                                uuid = UUID.FromString(cells[3]);
+                                WriteCharacteristic = service.GetCharacteristic(uuid);
+                                if (WriteCharacteristic == null ||
+                                    !WriteCharacteristic.Properties.HasFlag(GattProperty.Write))
+                                {
+                                    throw new Exception("Unknown write characteristic. " + uuid);
+                                }
+                                break;
+                            }
+                        }
+                    }
                 }
             }
-            //Read manufacturer spesific UUID from file.
-            using (var reader = new System.IO.StreamReader(_context.Assets.Open("devices.csv")))
+            catch (Exception ex)
             {
-                foreach (var row in reader.ReadToEnd().Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries))
+                if (_bluetooth != null)
                 {
-                    if (!row.StartsWith("#"))
-                    {
-                        var cells = row.Split(';');
-                        if (cells.Length != 4)
-                        {
-                            throw new ArgumentException("Invalid device. " + row);
-                        }
-                        string name = cells[0].Trim();
-                        bool contains = name.EndsWith("*");
-                        if (contains)
-                        {
-                            name = name.Substring(0, name.Length - 1);
-                        }
-                        if (string.Compare(name, _bluetooth._device.Name, true) == 0 ||
-                            (contains && _bluetooth._device.Name.Contains(name)))
-                        {
-                            UUID uuid = UUID.FromString(cells[1]);
-                            service = gatt.GetService(uuid);
-                            if (service == null)
-                            {
-                                throw new Exception("Unknown service. " + uuid);
-                            }
-                            //Get read characteristic.
-                            uuid = UUID.FromString(cells[2]);
-                            ReadCharacteristic = service.GetCharacteristic(uuid);
-                            if (ReadCharacteristic == null)
-                            {
-                                throw new Exception("Unknown read characteristic. " + uuid);
-                            }
-                            if (ReadCharacteristic.Properties.HasFlag(GattProperty.Notify))
-                            {
-                                gatt.SetCharacteristicNotification(ReadCharacteristic, true);
-                            }
-                            //Get write characteristic.
-                            uuid = UUID.FromString(cells[3]);
-                            WriteCharacteristic = service.GetCharacteristic(uuid);
-                            if (WriteCharacteristic == null ||
-                                !WriteCharacteristic.Properties.HasFlag(GattProperty.Write))
-                            {
-                                throw new Exception("Unknown write characteristic. " + uuid);
-                            }
-                            break;
-                        }
-                    }
+                    _bluetooth.NotifyError(ex);
                 }
             }
         }
@@ -166,17 +196,27 @@ namespace Gurux.Bluetooth
             [GeneratedEnum] ProfileState newState)
         {
             base.OnConnectionStateChange(gatt, status, newState);
-            if (newState == ProfileState.Connected)
+            try
             {
-                _bluetooth.NotifyMediaStateChange(MediaState.Open);
-                if (!gatt.Services.Any())
+                if (newState == ProfileState.Connected)
                 {
-                    gatt.DiscoverServices();
+                    _bluetooth.NotifyMediaStateChange(MediaState.Open);
+                    if (!gatt.Services.Any())
+                    {
+                        gatt.DiscoverServices();
+                    }
+                }
+                else if (newState == ProfileState.Disconnected)
+                {
+                    _bluetooth.Close();
                 }
             }
-            else if (newState == ProfileState.Disconnected)
+            catch (Exception ex)
             {
-                _bluetooth.Close();
+                if (_bluetooth != null)
+                {
+                    _bluetooth.NotifyError(ex);
+                }
             }
         }
     }
